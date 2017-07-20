@@ -73,15 +73,42 @@ def statictcs_words(words):
     return sorted_dict
 
 #4.输出成csv
-def print_to_csv(volcaulay_list, to_file_path, total_count):
+def print_to_csv(word_percent_dict, to_file_path ): # volcaulay_list is a dict
     nfile = open(to_file_path,'w+')
+    # current_count = 0
+    for val in word_percent_dict:
+        # num = val[1]
+        # current_count = current_count + num
+        # word_rate = (float(current_count)/total_count) * 100
+        nfile.write("%s,%s,%0.2f\n" % (val[0], str(val[1]), val[2]))
+    nfile.close()
+
+def tup2list(volcaulay_list_tup):
+    volcaulay_list_lst = []
+    for val in volcaulay_list_tup:
+        volcaulay_list_lst.append(list(val))
+    return volcaulay_list_lst
+
+#5.获取相应的百分比列表
+def word_percent(volcaulay_list_lst, total_count):
+    word_percent_list = []
     current_count = 0
-    for val in volcaulay_list:
+    for val in volcaulay_list_lst:
         num = val[1]
         current_count = current_count + num
-        word_rate = (float(current_count)/total_count) * 100
-        nfile.write("%s,%s,%0.2f\n" % (val[0], str(val[1]),word_rate))
-    nfile.close()
+        word_perct = (float(current_count)/float(total_count)) * 100
+        val.append(word_perct)
+        word_percent_list.append(val)
+    return word_percent_list
+
+def select_word(word_percent_list, rate_range):
+    word_list_recite = []
+    start = rate_range[0] * 100
+    end = rate_range[1] * 100
+    for val in word_percent_list:
+        if val[2] >= start and val[2] <= end:
+            word_list_recite.append(val)
+    return word_list_recite
 
 def main():
     #1. 读取文本
@@ -95,11 +122,17 @@ def main():
     
     #3. 统计单词和排序
     word_list = statictcs_words(f_words)
+    #4. 将tuple格式转为可变的list格式
+    volcaulay_list_lst = tup2list(word_list)
 
-    start_and_end = [0.5, 0.7] #截取这一部分的单词
-
+    #5.计算得到单词频次
+    word_percent_dict = word_percent(volcaulay_list_lst,total_word_count)
+    #6. 截取这一部分的单词
+    start_and_end = [0.5, 0.7] #
+    word_list_recite = select_word(word_percent_dict, start_and_end)
+    print '需要背诵的单词有%d个' % len(word_list_recite)
     #4. 输出文件
-    print_to_csv(word_list, 'output/test.csv', total_word_count)
+    print_to_csv(word_list_recite, 'output/Yang.csv' )
 
 
 if __name__ == "__main__":
