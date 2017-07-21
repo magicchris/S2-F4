@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import codecs
-import os
 # 解决 'ascii' codec can't decode byte 0xe5的问题！！（以下三句
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+import codecs
+import os
 #1. 读取文件
 #['aa', 'aaa-bbb-sds'] => ['aa', 'aaa', 'bbb', 'sds']
 def word_split(words):
