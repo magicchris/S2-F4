@@ -131,7 +131,6 @@ def read_explanation(file_path):
     return word_list_utf
 
 def add_explanation(word_list_recite, explanation_list):
-
     words_list = []
     explanation = []
     fword_list_recite =[]
@@ -148,6 +147,17 @@ def add_explanation(word_list_recite, explanation_list):
         else:
             fword_list_noExp.append(word)
     return fword_list_recite , fword_list_noExp
+
+def get_everyday_lst(fword_list_recite, is_ordered, amount_everyday):
+    num_lst = len(fword_list_recite) / amount_everyday + 1
+    words_dayslist = []
+    if ~is_ordered:
+        for index in range(0,num_lst):
+            words_dayslist.append(fword_list_recite[(index * amount_everyday) : ((index + 1) * amount_everyday)])
+        words_dayslist.append(fword_list_recite[(len(fword_list_recite) - amount_everyday * (num_lst - 1)):])
+    else:
+        pass
+    return words_dayslist
 
 def main():
     get_wordlist = True
@@ -167,15 +177,23 @@ def main():
     #6. 截取这一部分的单词
     if get_wordlist:
         start_and_end = [0.5, 0.7]  #
+        word_list_recite = select_word(word_percent_dict, start_and_end)
     else:
-        start_and_end = [0.0, 1.0]
-    word_list_recite = select_word(word_percent_dict, start_and_end)
+        word_list_recite = word_percent_dict
+
     print '需要背诵的单词有%d个' % len(word_list_recite)
     explanation_list = read_explanation('8000-words.txt')
     fword_list_recite, fword_list_noExp = add_explanation(word_list_recite, explanation_list)
     #4. 输出文件
-    print_to_csv(fword_list_recite, 'output/Day5.csv' )  #查到释义的单词
+    print_to_csv(fword_list_recite, 'output/recite_all.csv' )  #查到释义的单词
     print_to_csv(fword_list_noExp, 'output/Day5_2.csv')  #未查到释义的单词
 
+    amount_everyday = 100
+    is_ordered = True
+    words_dayslist = get_everyday_lst(fword_list_recite, is_ordered, amount_everyday)
+    for index in range(0, len(words_dayslist) - 1):
+        wd_lst = words_dayslist[index]
+        filename = 'output/day' + str(index) + '.csv'
+        print_to_csv(wd_lst, filename)
 if __name__ == "__main__":
     main()
