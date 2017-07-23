@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+# 解决 'ascii' codec can't decode byte 0xe5的问题！！（以下三句
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 import codecs
 import os
-
 #1. 读取文件
 #['aa', 'aaa-bbb-sds'] => ['aa', 'aaa', 'bbb', 'sds']
 def word_split(words):
@@ -75,12 +79,11 @@ def statictcs_words(words):
 #4.输出成csv
 def print_to_csv(word_percent_dict, to_file_path ): # volcaulay_list is a dict
     nfile = open(to_file_path,'w+')
-    # current_count = 0
     for val in word_percent_dict:
-        # num = val[1]
-        # current_count = current_count + num
-        # word_rate = (float(current_count)/total_count) * 100
-        nfile.write("%s,%s,%0.2f\n" % (val[0], str(val[1]), val[2]))
+        if len(val) == 4:
+            nfile.write("%s,%s,%0.2f,%s \n" % (val[0], str(val[1]), val[2], val[3]))
+        elif len(val) == 3:
+            nfile.write("%s,%s,%0.2f\n" % (val[0], str(val[1]), val[2]))
     nfile.close()
 
 def tup2list(volcaulay_list_tup):
@@ -110,30 +113,87 @@ def select_word(word_percent_list, rate_range):
             word_list_recite.append(val)
     return word_list_recite
 
+def read_explanation(file_path):
+    f = codecs.open(file_path, 'r', "utf-8") #打开文件
+    lines = f.readlines()
+    word_list = []
+    word_list_utf = []
+    for line in lines:
+        line = line.strip()
+        words = line.split("   ") #用空格分割
+        word_list.append(words)
+    for word in word_list:
+        word_utf = []
+        for index in word:
+            word_new = index.encode("utf-8")
+            word_utf.append(word_new)
+            word_list_utf.append(word_utf)
+    return word_list_utf
+
+def add_explanation(word_list_recite, explanation_list):
+    words_list = []
+    explanation = []
+    fword_list_recite =[]
+    fword_list_noExp =[]
+    for words in explanation_list:
+        if len(words) == 2:
+            words_list.append(words[0])
+            explanation.append(words[1])
+    for word in word_list_recite:
+        if word[0] in words_list:
+            idx = words_list.index(word[0])
+            word.append(explanation[idx])
+            fword_list_recite.append(word)
+        else:
+            fword_list_noExp.append(word)
+    return fword_list_recite , fword_list_noExp
+
+def get_everyday_lst(fword_list_recite, is_ordered, amount_everyday):
+    num_lst = len(fword_list_recite) / amount_everyday + 1
+    words_dayslist = []
+    if ~is_ordered:
+        for index in range(0,num_lst):
+            words_dayslist.append(fword_list_recite[(index * amount_everyday) : ((index + 1) * amount_everyday)])
+        words_dayslist.append(fword_list_recite[(len(fword_list_recite) - amount_everyday * (num_lst - 1)):])
+    else:
+        pass
+    return words_dayslist
+
 def main():
+    get_wordlist = True
     #1. 读取文本
     words = read_files(get_file_from_folder('data1'))
     print '获取了未格式化的单词 %d 个' % (len(words))
-
     #2. 清洗文本
     f_words = format_words(words)
     total_word_count = len(f_words)
     print '获取了已经格式化的单词 %d 个' %(len(f_words))
-    
     #3. 统计单词和排序
     word_list = statictcs_words(f_words)
     #4. 将tuple格式转为可变的list格式
     volcaulay_list_lst = tup2list(word_list)
-
     #5.计算得到单词频次
     word_percent_dict = word_percent(volcaulay_list_lst,total_word_count)
     #6. 截取这一部分的单词
-    start_and_end = [0.5, 0.7] #
-    word_list_recite = select_word(word_percent_dict, start_and_end)
+    if get_wordlist:
+        start_and_end = [0.5, 0.7]  #
+        word_list_recite = select_word(word_percent_dict, start_and_end)
+    else:
+        word_list_recite = word_percent_dict
+
     print '需要背诵的单词有%d个' % len(word_list_recite)
+    explanation_list = read_explanation('8000-words.txt')
+    fword_list_recite, fword_list_noExp = add_explanation(word_list_recite, explanation_list)
     #4. 输出文件
-    print_to_csv(word_list_recite, 'output/Yang.csv' )
+    print_to_csv(fword_list_recite, 'output/recite_all.csv' )  #查到释义的单词
+    print_to_csv(fword_list_noExp, 'output/Day5_2.csv')  #未查到释义的单词
 
-
+    amount_everyday = 100
+    is_ordered = True
+    words_dayslist = get_everyday_lst(fword_list_recite, is_ordered, amount_everyday)
+    for index in range(0, len(words_dayslist) - 1):
+        wd_lst = words_dayslist[index]
+        filename = 'output/day' + str(index) + '.csv'
+        print_to_csv(wd_lst, filename)
 if __name__ == "__main__":
     main()
