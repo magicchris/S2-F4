@@ -84,6 +84,8 @@ def print_to_csv(word_percent_dict, to_file_path ): # volcaulay_list is a dict
             nfile.write("%s,%s,%0.2f,%s \n" % (val[0], str(val[1]), val[2], val[3]))
         elif len(val) == 3:
             nfile.write("%s,%s,%0.2f\n" % (val[0], str(val[1]), val[2]))
+        elif len(val) == 2:
+            nfile.write("%s,%s\n" % (val[0], val[1]))
     nfile.close()
 
 def tup2list(volcaulay_list_tup):
@@ -131,7 +133,6 @@ def read_explanation(file_path):
     return word_list_utf
 
 def add_explanation(word_list_recite, explanation_list):
-
     words_list = []
     explanation = []
     fword_list_recite =[]
@@ -148,6 +149,38 @@ def add_explanation(word_list_recite, explanation_list):
         else:
             fword_list_noExp.append(word)
     return fword_list_recite , fword_list_noExp
+
+def dictkey_sort(dict):
+    keys = dict.keys()
+    keys.sort()
+    return [dict[key] for key in keys],keys
+
+def words_sort(fword_list_recite):
+    words_order_dict = {}
+    words_order_list = []
+    for item in fword_list_recite:
+        words_order_dict[item[0]] = item[3]
+    lst_value, lst_key = dictkey_sort(words_order_dict)
+    for index in range(0,len(lst_key)):
+        words_order_list.append([lst_key[index],lst_value[index]])
+    return words_order_list
+
+
+
+
+def get_everyday_lst(fword_list_recite, is_ordered, amount_everyday):
+    num_lst = len(fword_list_recite) / amount_everyday + 1
+    words_dayslist = []
+    if is_ordered:
+        tword_list_recite = words_sort(fword_list_recite)
+    else:
+        tword_list_recite = fword_list_recite
+
+    for index in range(0, num_lst):
+        words_dayslist.append(tword_list_recite[(index * amount_everyday): ((index + 1) * amount_everyday)])
+    words_dayslist.append(tword_list_recite[(len(tword_list_recite) - amount_everyday * (num_lst - 1)):])
+
+    return words_dayslist
 
 def main():
     get_wordlist = True
@@ -167,15 +200,23 @@ def main():
     #6. 截取这一部分的单词
     if get_wordlist:
         start_and_end = [0.5, 0.7]  #
+        word_list_recite = select_word(word_percent_dict, start_and_end)
     else:
-        start_and_end = [0.0, 1.0]
-    word_list_recite = select_word(word_percent_dict, start_and_end)
+        word_list_recite = word_percent_dict
+
     print '需要背诵的单词有%d个' % len(word_list_recite)
     explanation_list = read_explanation('8000-words.txt')
     fword_list_recite, fword_list_noExp = add_explanation(word_list_recite, explanation_list)
     #4. 输出文件
-    print_to_csv(fword_list_recite, 'output/Day5.csv' )  #查到释义的单词
+    print_to_csv(fword_list_recite, 'output/recite_all.csv' )  #查到释义的单词
     print_to_csv(fword_list_noExp, 'output/Day5_2.csv')  #未查到释义的单词
 
+    amount_everyday = 100
+    is_ordered = True
+    words_dayslist = get_everyday_lst(fword_list_recite, is_ordered, amount_everyday)
+    for index in range(0, len(words_dayslist) - 1 ):
+        wd_lst = words_dayslist[index]
+        filename = 'output/day' + str(index) + '.csv'
+        print_to_csv(wd_lst, filename)
 if __name__ == "__main__":
     main()
